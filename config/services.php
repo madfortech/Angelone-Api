@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'angel' => [
+        'api_key'    => env('ANGEL_API_KEY'),
+        'secret_key'=> env('ANGEL_SECRET_KEY'),
+        'client_id' => env('ANGEL_CLIENT_ID'),
+        'redirect'  => env('ANGEL_REDIRECT_URI'),
+    ],
+
+
+
 ];
