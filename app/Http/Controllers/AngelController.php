@@ -22,17 +22,18 @@ class AngelController extends Controller
     // Step 2: Callback after login
     public function callback(Request $request)
     {
-        $authToken = $request->query('auth_token');
-        $feedToken = $request->query('feed_token');
+        // $authToken = $request->query('auth_token');
+        // $feedToken = $request->query('feed_token');
 
-        if (!$authToken) {
-            abort(403, 'Auth token missing');
-        }
+        // if (!$authToken) {
+        //     abort(403, 'Auth token missing');
+        // }
 
-        Session::put('angel_auth_token', $authToken);
-        Session::put('angel_feed_token', $feedToken);
+        // Session::put('angel_auth_token', $authToken);
+        // Session::put('angel_feed_token', $feedToken);
 
-        return redirect('/angel/profile');
+        // return redirect('/angel/profile');
+        dd($request->all());
     }
 
     // Step 3: Retrieve User Profile (ONLY ONCE ✅)
