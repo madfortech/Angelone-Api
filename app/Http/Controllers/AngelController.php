@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Session;
 
 class AngelController extends Controller
 {
-    // Step 1: Redirect user to Angel (FIXED)
-   public function redirectToAngel()
+    // Step 1: Redirect user to Angel
+    public function redirectToAngel()
     {
         $url = "https://smartapi.angelone.in/publisher-login"
             . "?api_key=" . config('services.angel.api_key')
@@ -19,7 +19,6 @@ class AngelController extends Controller
         return redirect($url);
     }
 
-
     // Step 2: Callback after login
     public function callback(Request $request)
     {
@@ -27,7 +26,7 @@ class AngelController extends Controller
         $feedToken = $request->query('feed_token');
 
         if (!$authToken) {
-            return abort(403, 'Auth token missing');
+            abort(403, 'Auth token missing');
         }
 
         Session::put('angel_auth_token', $authToken);
@@ -36,7 +35,7 @@ class AngelController extends Controller
         return redirect('/angel/profile');
     }
 
-    // Step 3: Get user profile
+    // Step 3: Retrieve User Profile (ONLY ONCE ✅)
     public function profile()
     {
         $jwt = Session::get('angel_auth_token');
@@ -48,20 +47,25 @@ class AngelController extends Controller
 
         $response = Http::withHeaders([
             'Authorization' => "Bearer {$jwt}",
+            'Content-Type'  => 'application/json',
             'Accept'        => 'application/json',
+            'X-UserType'    => 'USER',
+            'X-SourceID'    => 'WEB',
+            'X-PrivateKey'  => config('services.angel.api_key'),
         ])->get(
             'https://apiconnect.angelone.in/rest/secure/angelbroking/user/v1/getProfile'
         );
 
         if (!$response->successful()) {
             return response()->json([
-                'error'  => true,
-                'status'=> $response->status(),
+                'error' => true,
                 'body'  => $response->json(),
-            ]);
+            ], $response->status());
         }
 
-        return response()->json($response->json());
+        return view('angel.profile', [
+            'profile' => $response->json()['data']
+        ]);
     }
 
     // Step 4: Logout
@@ -80,7 +84,7 @@ class AngelController extends Controller
             ])->post(
                 'https://apiconnect.angelone.in/rest/secure/angelbroking/user/v1/logout',
                 [
-                    'clientcode' => config('services.angel.client_id')
+                    'clientcode' => config('services.angel.client_id'),
                 ]
             );
         }
@@ -92,38 +96,4 @@ class AngelController extends Controller
 
         return redirect('/')->with('message', 'Angel One logged out successfully');
     }
-
-
-    public function profile()
-    {
-        $jwt = Session::get('angel_auth_token');
-
-        if (!$jwt) {
-            return redirect('/')
-                ->with('error', 'Angel session expired. Please login again.');
-        }
-
-        $response = Http::withHeaders([
-            'Authorization'   => "Bearer {$jwt}",
-            'Content-Type'    => 'application/json',
-            'Accept'          => 'application/json',
-            'X-UserType'      => 'USER',
-            'X-SourceID'      => 'WEB',
-            'X-PrivateKey'    => config('services.angel.api_key'),
-        ])->get(
-            'https://apiconnect.angelone.in/rest/secure/angelbroking/user/v1/getProfile'
-        );
-
-        if (!$response->successful()) {
-            return response()->json([
-                'error' => true,
-                'body'  => $response->json(),
-            ], $response->status());
-        }
-
-        return view('angel.profile', [
-            'profile' => $response->json()['data']
-        ]);
-}
-
 }
